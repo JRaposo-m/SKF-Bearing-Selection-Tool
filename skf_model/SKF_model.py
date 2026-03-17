@@ -4,9 +4,7 @@ import matplotlib.pyplot as plt
 
 class SKFFrictionModel:
     def __init__(self, d, D, B, Fr, Fa, n, nu):
-        """
-        Mantendo o teu setup original e constantes tal como forneceste.
-        """
+        
         self.d = d
         self.D = D
         self.dm = 0.5 * (d + D)
@@ -18,7 +16,7 @@ class SKFFrictionModel:
 
         self.H = 1 * self.dm
 
-        # Constantes conforme colocaste
+       
         self.R1 = 1.12e-7
         self.S1 = 0.17
         self.S2 = 0.0015
@@ -39,18 +37,18 @@ class SKFFrictionModel:
     def sliding_friction(self):
         # M_sl = G_sl * mu_sl
         G_sl = self.S1 * (self.dm**0.9)*self.Fa + self.S2 * self.dm * self.Fr
-        fi_bl = 1 / (2.718**(2.6*10**(-8) * (self.n*self.nu)**1.4 * self.dm))  # mantive tua lógica, corrigindo expoente ^1.4
+        fi_bl = 1 / (2.718**(2.6*10**(-8) * (self.n*self.nu)**1.4 * self.dm)) 
         mu_EHL = 0.02
         mu_bl = 0.12 # n != 0
         mu_sl = fi_bl * mu_bl + (1 - fi_bl) * mu_EHL
         return G_sl * mu_sl
 
     def drag_friction(self):
-        # Mantendo tua estrutura; apenas garanto que retorna M_drag
+        
         fA = 0.05 * (self.Kz * (self.D + self.d)) / (self.D - self.d)
         t = 2 * np.arccos((0.6 * self.dm - self.H) / (0.6 * self.dm))
         Rs = 0.36 * self.dm**2 * (t - np.sin(t)) * fA
-        # Corrigir HTML escapado (>= e <=)
+        
         if (t >= 0 and t <= 3.1416):
             ft = np.sin(0.5 * t)
         else:
@@ -60,7 +58,7 @@ class SKFFrictionModel:
         K_roll = ((self.KL * self.Kz * (self.d + self.D)) / (self.D - self.d)) * 10 **-12
         V_M = 0.0012
 
-        # Corrigir vírgula decimal (-1.379)
+       
         M_drag = 4 * V_M * K_roll * Cw * self.B * self.dm**4 * self.n**2 + \
                  (1.093*10**-7) * self.n**2 * self.dm**3 * (((self.n*(self.dm**2) * ft)/self.nu)**-1.379) * Rs
         return M_drag
