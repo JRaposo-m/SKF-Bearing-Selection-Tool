@@ -1,160 +1,164 @@
-# SKF Bearing Model
+# skf-bearing-model
 
-An open-source Python tool for SKF bearing selection, performance evaluation and fault diagnostics — built on the official SKF catalogue formulas.
-
-> **Status:** 🚧 Active development  
-> **Current phase:** Week 1 — Core selection (deep groove ball bearings)
+Python implementation of the SKF bearing selection procedure, following the sequence described in the SKF General Catalogue (10000 EN). The project is under active development.
 
 ---
 
-## What this does
+## Background
 
-Most bearing tools are black boxes. This project exposes every formula with its exact catalogue reference, and extends the standard selection workflow in two directions the SKF online tools don't cover:
+The SKF online selection tools do not expose intermediate values — viscosity ratio, equivalent load, or the a_SKF factor used — making it impossible to audit a result or integrate the calculation into a larger workflow. This library implements the same procedure with every intermediate value accessible and every formula referenced to the catalogue page it comes from.
 
-- **Bidirectional:** given a bearing → returns ideal operating conditions (not just the other way around)
-- **Diagnostics:** given vibration data or misalignment → corrects life estimation and identifies fault frequencies
-
----
-
-## Roadmap
-
-### ✅ Week 1 — Core selection *(in progress)*
-- [ ] Deep groove ball bearing database (CSV)
-- [ ] L10 basic rating life
-- [ ] SKF rating life (a_SKF factor)
-- [ ] `selector.py` — operating conditions → ranked bearing list
-- [ ] Results validated against SKF Bearing Calculator
-- [ ] README with usage examples
-
-### 🔲 Month 1 — Lubrication + multi-type
-- [ ] Reference viscosity ν₁ and viscosity ratio κ
-- [ ] Lubrication condition assessment
-- [ ] `advisor.py` — given bearing → ideal operating conditions
-- [ ] Extended database: angular contact + cylindrical roller bearings
-- [ ] Unit tests for all core formulas
-
-### 🔲 Semester — Diagnostics + misalignment
-- [ ] Bearing fault frequencies (BPFO, BPFI, BSF, FTF)
-- [ ] Misalignment detection from vibration signature (1×, 2× harmonics)
-- [ ] Life correction factor based on detected misalignment
-- [ ] Severity estimation module
-- [ ] Full system: selection + lubrication + diagnostics in one workflow
+The scope extends in two directions that the SKF tools do not cover: given a bearing designation and operating speed, the library returns the ideal operating conditions (reverse lookup); and given vibration data or detected misalignment, it corrects the life estimate and identifies fault frequencies.
 
 ---
 
-## Project Structure
+## Status
+
+The project is at the end of Phase 1. Deep groove ball bearing (DGBB) selection is the current focus.
+
+**Phase 1 — in progress**
+
+- L10 basic rating life per ISO 281
+- a_SKF correction factor: catalogue curves digitised with WebPlotDigitizer, stored as CSV per kappa value, interpolated in Python
+- Equivalent dynamic load P with axial load factors e and Y from the catalogue tables
+- `selector.py`: given (Fr, Fa, n, L10h), returns a ranked list of bearings with estimated life and safety margin
+- Validation against the SKF Bearing Calculator on a set of reference cases
+
+**Phase 2 — planned**
+
+- Reference viscosity v1 from bearing mean diameter and speed
+- Viscosity ratio kappa = v / v1 and lubrication condition assessment
+- `advisor.py`: given bearing designation and speed, returns ideal viscosity, load limits, relubrication interval
+- Database extended to angular contact ball and cylindrical roller bearings
+- Unit tests for all core formulas
+
+**Phase 3 — planned**
+
+- Bearing fault frequencies: BPFO, BPFI, BSF, FTF from bearing geometry
+- Misalignment detection from vibration signature (1x, 2x harmonics)
+- Life correction factor based on detected misalignment severity
+- Full workflow: selection, lubrication assessment, and diagnostics in sequence
+
+---
+
+## Repository structure
 
 ```
-skf_model/
-│
-├── bearings/
-│   ├── deep_groove_ball.py       # Deep groove ball bearings
-│   ├── angular_contact_ball.py   # Angular contact ball bearings
-│   ├── cylindrical_roller.py     # Cylindrical roller bearings
-│   ├── tapered_roller.py         # Tapered roller bearings
-│   ├── spherical_roller.py       # Spherical roller bearings
-│   └── data/
-│       └── deep_groove_ball.csv  # Bearing database (C, C0, speed limits, dimensions)
-│
-├── common/
-│   ├── life.py                   # L10 and SKF rating life formulas
-│   ├── lubrication.py            # Reference viscosity, κ ratio (Month 1)
-│   ├── load.py                   # Equivalent dynamic/static load
-│   └── misalignment.py           # Load correction for misalignment (Semester)
-│
-├── diagnostics/                  # (Semester)
-│   ├── vibration.py              # Fault frequency calculation (BPFO, BPFI, BSF, FTF)
-│   ├── fault_freq.py             # Misalignment/imbalance pattern identification
-│   └── severity.py               # Misalignment severity estimation
-│
-├── selector.py                   # Operating conditions → bearing selection
-├── advisor.py                    # Given bearing → ideal operating conditions (Month 1)
-├── main.py                       # Entry point with usage examples
-└── tests/
-    └── test_life.py              # Unit tests (Month 1)
+skf-bearing-model/
+|
++-- bearings/
+|   +-- deep_groove_ball.py        # load ratings, geometry, speed limits
+|   +-- angular_contact_ball.py    # Phase 2
+|   +-- cylindrical_roller.py      # Phase 2
+|   +-- data/
+|       +-- deep_groove_ball.csv   # C, C0, dimensions, speed limits
+|
++-- catalogue/
+|   +-- a_SKF/
+|   |   +-- k_0.15.csv             # digitised curve, kappa = 0.15
+|   |   +-- k_0.2.csv
+|   |   +-- k_0.3.csv
+|   |   +-- ...
+|   |   +-- k_4.csv
+|   +-- viscosity/
+|       +-- VG_10.csv              # viscosity-temperature curve, ISO VG 10
+|       +-- VG_100.csv
+|       +-- ...
+|
++-- common/
+|   +-- life.py                    # L10 and a_SKF rating life
+|   +-- load.py                    # equivalent dynamic and static load
+|   +-- lubrication.py             # v1, kappa (Phase 2)
+|   +-- misalignment.py            # load correction factor (Phase 3)
+|
++-- diagnostics/                   # Phase 3
+|   +-- vibration.py               # BPFO, BPFI, BSF, FTF
+|   +-- fault_freq.py              # misalignment and imbalance pattern identification
+|   +-- severity.py                # misalignment severity estimation
+|
++-- selector.py                    # operating conditions -> bearing selection
++-- advisor.py                     # bearing -> ideal operating conditions (Phase 2)
++-- main.py                        # worked examples
++-- tests/
+    +-- test_life.py
 ```
 
 ---
 
-## How to Run
+## Installation
 
-### Requirements
-
-- Python 3.9 or later
-- `numpy`, `pandas`
+Requires Python 3.9 or later.
 
 ```bash
-pip install numpy pandas
+git clone https://github.com/<username>/skf-bearing-model.git
+cd skf-bearing-model
+pip install numpy pandas scipy
 ```
 
-### Basic usage — Bearing selection
+---
+
+## Usage
+
+### Bearing selection
 
 ```python
 from selector import select_bearing
 
 results = select_bearing(
-    Fr      = 5000,    # Radial load (N)
-    Fa      = 1000,    # Axial load (N)
-    n       = 1500,    # Rotational speed (rpm)
-    L10h    = 20000,   # Required bearing life (hours)
+    Fr   = 5000,    # radial load, N
+    Fa   = 1000,    # axial load, N
+    n    = 1500,    # rotational speed, rpm
+    L10h = 20000,   # required service life, hours
 )
-
-print(results)
-# Returns a ranked list of bearings with estimated life and safety margin
 ```
 
-### Basic usage — Advisor *(Month 1)*
+Returns a ranked DataFrame with bearing designation, dynamic load rating C, estimated L10h, and margin over the required life.
+
+### Operating condition advisor (Phase 2)
 
 ```python
 from advisor import get_operating_conditions
 
 conditions = get_operating_conditions(
-    bearing = '6205',   # SKF bearing designation
-    n       = 1500,     # Rotational speed (rpm)
+    bearing = '6308',
+    n       = 1500,   # rpm
 )
-
-print(conditions)
-# Returns ideal viscosity, load limits, temperature range, etc.
 ```
+
+Returns reference viscosity v1, viscosity ratio kappa, static safety factor C0/P0, and maximum admissible axial load.
 
 ---
 
-## Methodology
+## Catalogue curves
 
-This tool follows the official SKF bearing selection process:
-
-```
-Operating conditions
-        │
-        ├── Bearing type   (space, load, speed, misalignment)
-        ├── Bearing size   (dynamic load, required life, viscosity)
-        ├── Lubrication    (viscosity ratio κ, relubrication interval)
-        └── Diagnostics    (fault frequencies, misalignment correction)
-                │
-                ▼
-        Bearing solution
-```
-
-All formulas reference the **SKF General Catalogue (10000 EN)** with explicit page numbers in the source code comments.
+The a_SKF factor and viscosity-temperature curves are taken from the SKF General Catalogue and digitised using WebPlotDigitizer. Each curve is stored as a CSV file with the raw digitised points. The Python scripts that read and interpolate these files are in the same directory. This keeps the source data visible and independently verifiable.
 
 ---
 
-## Why this exists
+## Calculation procedure
 
-| | SKF online tools | This project |
-|---|---|---|
-| Formulas visible | ❌ Black box | ✅ Fully documented |
-| Bidirectional | ❌ Conditions → bearing only | ✅ Both directions |
-| Misalignment impact on life | ❌ | ✅ *(Semester)* |
-| Fault frequency diagnostics | ❌ | ✅ *(Semester)* |
-| Integrates into Python workflows | ❌ | ✅ |
-| Open source | ❌ | ✅ |
+The selection sequence follows SKF General Catalogue section 17:
+
+```
+Operating conditions: Fr, Fa, n, lubricant viscosity, required L10h
+    |
+    +-- 1. Bearing type      load direction, space, misalignment tolerance
+    +-- 2. Bearing size      required C from L10 equation, selection from database
+    +-- 3. a_SKF factor      kappa from viscosity, a_SKF from digitised catalogue curve
+    +-- 4. Lubrication       v1, kappa, relubrication interval
+    +-- 5. Diagnostics       fault frequencies, misalignment correction
+    |
+    v
+Bearing designation + operating recommendations
+```
+
+All formula references in the source code include the catalogue section and page number as comments.
 
 ---
 
 ## References
 
-1. SKF General Catalogue 10000 EN
-2. ISO 281 — Rolling bearings: Dynamic load ratings and rating life
-3. ISO/TS 16281 — Methods for calculating the modified reference rating life
-4. SKF Engineering Handbook
+- SKF General Catalogue 10000 EN
+- ISO 281:2007 — Rolling bearings: Dynamic load ratings and rating life
+- ISO/TS 16281:2008 — Methods for calculating the modified reference rating life
+- SKF Engineering Handbook
