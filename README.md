@@ -14,7 +14,7 @@ The scope extends in two directions that the SKF tools do not cover: given a bea
 
 ## Status
 
-The project is at the end of Phase 1. Deep groove ball bearing (DGBB) selection is the current focus.
+The project is in active development. The current focus is deep groove ball bearing (DGBB) selection and lubrication assessment.
 
 **Phase 1 — in progress**
 
@@ -26,7 +26,6 @@ The project is at the end of Phase 1. Deep groove ball bearing (DGBB) selection 
 
 **Phase 2 — planned**
 
-- Reference viscosity v1 from bearing mean diameter and speed
 - Viscosity ratio kappa = v / v1 and lubrication condition assessment
 - `advisor.py`: given bearing designation and speed, returns ideal viscosity, load limits, relubrication interval
 - Database extended to angular contact ball and cylindrical roller bearings
@@ -44,43 +43,44 @@ The project is at the end of Phase 1. Deep groove ball bearing (DGBB) selection 
 ## Repository structure
 
 ```
-skf-bearing-model/
+SKF-Bearing-Selection-Tool/
 |
-+-- bearings/
-|   +-- deep_groove_ball.py        # load ratings, geometry, speed limits
-|   +-- angular_contact_ball.py    # Phase 2
-|   +-- cylindrical_roller.py      # Phase 2
-|   +-- data/
-|       +-- deep_groove_ball.csv   # C, C0, dimensions, speed limits
++-- Graficos/
+|   +-- Bearing life/
+|   |   +-- a_SKF/
+|   |       +-- Ball Bearing/
+|   |           +-- k_0.15.csv             # digitised curve, kappa = 0.15
+|   |           +-- k_0.2.csv
+|   |           +-- ...
+|   |           +-- k_4.csv
+|   |           +-- a_skf_radial_ball_bearing.py
+|   +-- Viscosity/
+|       +-- Rated Viscosity/
+|       |   +-- n_rpm_2.csv                # digitised rated viscosity curve, n = 2 rpm
+|       |   +-- n_rpm_5.csv
+|       |   +-- ...
+|       |   +-- n_rpm_100 000.csv
+|       |   +-- low_n_dm_boundary.csv      # low nd_m area boundary
+|       |   +-- high_n_dm_boundary.csv     # high nd_m area boundary
+|       |   +-- rated_viscosity.py
+|       +-- Viscosity-temperature diagram/
+|           +-- VG 10.csv                  # viscosity-temperature curve, ISO VG 10
+|           +-- VG 100.csv
+|           +-- ...
+|           +-- viscosity_ISO.py
 |
-+-- catalogue/
-|   +-- a_SKF/
-|   |   +-- k_0.15.csv             # digitised curve, kappa = 0.15
-|   |   +-- k_0.2.csv
-|   |   +-- k_0.3.csv
-|   |   +-- ...
-|   |   +-- k_4.csv
-|   +-- viscosity/
-|       +-- VG_10.csv              # viscosity-temperature curve, ISO VG 10
-|       +-- VG_100.csv
-|       +-- ...
-|
-+-- common/
-|   +-- life.py                    # L10 and a_SKF rating life
-|   +-- load.py                    # equivalent dynamic and static load
-|   +-- lubrication.py             # v1, kappa (Phase 2)
-|   +-- misalignment.py            # load correction factor (Phase 3)
-|
-+-- diagnostics/                   # Phase 3
-|   +-- vibration.py               # BPFO, BPFI, BSF, FTF
-|   +-- fault_freq.py              # misalignment and imbalance pattern identification
-|   +-- severity.py                # misalignment severity estimation
-|
-+-- selector.py                    # operating conditions -> bearing selection
-+-- advisor.py                     # bearing -> ideal operating conditions (Phase 2)
-+-- main.py                        # worked examples
-+-- tests/
-    +-- test_life.py
++-- skf_model/
+    +-- bearings/
+    |   +-- data/
+    |   |   +-- deep_groove_ball.csv       # C, C0, dimensions, speed limits
+    |   |   +-- deep_groove_ball.py
+    |   +-- angular_contact_ball.py        # Phase 2
+    |   +-- cylindrical_roller.py          # Phase 2
+    +-- common/
+        +-- life.py                        # L10 and a_SKF rating life
+        +-- load.py                        # equivalent dynamic and static load
+        +-- lubrication.py                 # v1, kappa (Phase 2)
+        +-- misalignment.py                # load correction factor (Phase 3)
 ```
 
 ---
@@ -90,8 +90,8 @@ skf-bearing-model/
 Requires Python 3.9 or later.
 
 ```bash
-git clone https://github.com/<username>/skf-bearing-model.git
-cd skf-bearing-model
+git clone https://github.com/<username>/SKF-Bearing-Selection-Tool.git
+cd SKF-Bearing-Selection-Tool
 pip install numpy pandas scipy
 ```
 
@@ -99,10 +99,28 @@ pip install numpy pandas scipy
 
 ## Usage
 
-### Bearing selection
+### Rated viscosity
 
 ```python
-from selector import select_bearing
+from Graficos.Viscosity.Rated_Viscosity.rated_viscosity import get_v1, get_n, get_zone
+
+v1 = get_v1(dm=100, n=1500)     # rated viscosity for dm=100 mm, n=1500 rpm
+n  = get_n(dm=100, v1=12)       # speed for dm=100 mm, v1=12 mm²/s
+z  = get_zone(dm=100, v1=12)    # 'low', 'normal', or 'high'
+```
+
+### Bearing life modification factor
+
+```python
+from Graficos.Bearing_life.a_SKF.Ball_Bearing.a_skf_radial_ball_bearing import get_a_skf
+
+a = get_a_skf(x=0.5, k=0.25)   # a_SKF for given contamination factor x and viscosity ratio k
+```
+
+### Bearing selection (in progress)
+
+```python
+from skf_model.selector import select_bearing
 
 results = select_bearing(
     Fr   = 5000,    # radial load, N
@@ -112,26 +130,17 @@ results = select_bearing(
 )
 ```
 
-Returns a ranked DataFrame with bearing designation, dynamic load rating C, estimated L10h, and margin over the required life.
-
-### Operating condition advisor (Phase 2)
-
-```python
-from advisor import get_operating_conditions
-
-conditions = get_operating_conditions(
-    bearing = '6308',
-    n       = 1500,   # rpm
-)
-```
-
-Returns reference viscosity v1, viscosity ratio kappa, static safety factor C0/P0, and maximum admissible axial load.
-
 ---
 
 ## Catalogue curves
 
-The a_SKF factor and viscosity-temperature curves are taken from the SKF General Catalogue and digitised using WebPlotDigitizer. Each curve is stored as a CSV file with the raw digitised points. The Python scripts that read and interpolate these files are in the same directory. This keeps the source data visible and independently verifiable.
+All curves are taken from the SKF General Catalogue and digitised using WebPlotDigitizer. Each curve is stored as a CSV file with the raw digitised points alongside the Python script that reads and interpolates it. This keeps the source data visible and independently verifiable.
+
+Current coverage:
+
+- a_SKF factor — ball bearings, kappa = 0.15 to 4.0 (13 curves)
+- Rated viscosity v1 — n = 2 to 100 000 rpm (17 curves), with operating zone boundaries
+- Viscosity-temperature — ISO VG grades 10 to 1000
 
 ---
 
