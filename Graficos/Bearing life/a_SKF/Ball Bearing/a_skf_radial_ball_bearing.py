@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     import matplotlib.pyplot as plt
 
-    x_plot = np.logspace(-3, np.log10(5), 500)
+    x_plot = np.logspace(np.log10(0.005), np.log10(5), 500)
 
     plt.figure(figsize=(10, 8))
     for k in _k_values:
