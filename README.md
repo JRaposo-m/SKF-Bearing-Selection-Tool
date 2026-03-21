@@ -1,4 +1,4 @@
-# skf-bearing-model
+# SKF-Bearing-Selection-Tool
 
 Python implementation of the SKF bearing selection procedure, following the sequence described in the SKF General Catalogue (10000 EN). The project is under active development.
 
