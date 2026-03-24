@@ -224,6 +224,7 @@ class BearingLife:
         self._cache          = {}
         self._reliability  = reliability
         self._failure_prob = failure_prob
+        self._apply_matched_pair_ratings()
 
         if bearing.get("type") not in _BEARING_CONFIGS:
             raise ValueError(
@@ -312,6 +313,23 @@ class BearingLife:
                     f"Valid: single, tandem, back_to_back, face_to_face"
                 )
         return self._cache["eXY"]
+    
+    def _apply_matched_pair_ratings(self) -> None:
+        """
+        For matched bearing pairs (back_to_back or face_to_face), adjust load
+        ratings to pair values per SKF General Catalogue 10000 EN — section 17:
+            C   = 1.62 * C_single
+            C0  = 2    * C0_single
+            Pu  = 2    * Pu_single
+        Only applied once — skipped for single and tandem arrangements.
+        """
+        if self.arrangement in ("back_to_back", "face_to_face"):
+            if not self._cache.get("pair_ratings_applied"):
+                self.bearing = dict(self.bearing)   # avoid mutating the original dict
+                self.bearing["C"]  = 1.62 * self.bearing["C"]
+                self.bearing["C0"] = 2.0  * self.bearing["C0"]
+                self.bearing["Pu"] = 2.0  * self.bearing["Pu"]
+                self._cache["pair_ratings_applied"] = True
 
     def _equivalent_load(self) -> float:
         """
@@ -347,12 +365,21 @@ class BearingLife:
     def _static_load(self) -> float:
         """
         Equivalent static bearing load P0 [N].
-        P0 = 0.6*Fr + 0.5*Fa    (deep groove ball bearings)
-        P0 = Fr                 if the above is less than Fr
+
+        Single and tandem:
+            P0 = 0.6*Fr + 0.5*Fa
+            P0 = Fr                if the above is less than Fr
+
+        Back-to-back and face-to-face:
+            P0 = Fr + 1.7*Fa
+
         SKF General Catalogue 10000 EN — section 17
         """
         if "P0" not in self._cache:
-            P0 = max(0.6 * self.Fr + 0.5 * self.Fa, self.Fr)
+            if self.arrangement in ("single", "tandem"):
+                P0 = max(0.6 * self.Fr + 0.5 * self.Fa, self.Fr)
+            elif self.arrangement in ("back_to_back", "face_to_face"):
+                P0 = self.Fr + 1.7 * self.Fa
             self._cache["P0"] = P0
         return self._cache["P0"]
 
