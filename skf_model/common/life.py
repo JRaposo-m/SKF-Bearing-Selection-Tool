@@ -410,7 +410,7 @@ class BearingLife:
                 self._cache["eta_c"] = float(self._eta_c_override)
             else:
                 lo, hi = get_eta_c(self.contamination, self.bearing["dm"])
-                self._cache["eta_c"] = (lo + hi) / 2
+                self._cache["eta_c"] = (lo + hi) / 2 # midpoint of the range 
         return self._cache["eta_c"]
 
     def _x_factor(self) -> float:
@@ -575,8 +575,8 @@ if __name__ == "__main__":
     ]:
         bl = BearingLife(
             bearing         = bearing,
-            Fr              = 2000,
-            Fa              = 1000,
+            Fr              = 1000,
+            Fa              = 100,
             n               = 1500,
             viscosity_grade = "150",
             temperature     = 70,
