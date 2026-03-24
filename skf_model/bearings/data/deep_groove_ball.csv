@@ -1,4 +1,4 @@
-type, d, D, B, C, C0, Pu, n_ref, n_limit, mass, designation, capped_one_side, kt, f0
+type, d, D, B, C, C0, Pu, n_ref, n_limit, mass, designation, capped_one_side, kr, f0
 s_row, 3, 10, 4, 0.54, 0.18, 0.007, 130000, 80000, 0.0015, 623, , 0.025, 7.5
 s_row, 3, 10, 4, 0.54, 0.18, 0.007, , 40000, 0.0015, 623-2RS1, 623-RS1, 0.025, 7.5
 s_row, 3, 10, 4, 0.54, 0.18, 0.007, 130000, 60000, 0.0015, 623-2Z, 623-Z, 0.025, 7.5

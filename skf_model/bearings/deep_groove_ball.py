@@ -60,7 +60,7 @@ def load_bearings(csv_path: str = None) -> list[DeepGrooveBallBearing]:
             n_ref           = float(row['n_ref']) if pd.notna(row['n_ref']) else None,
             n_limit         = float(row['n_limit']),
             mass            = float(row['mass']),
-            kt              = float(row['kt']),
+            kr              = float(row['kr']),
             f0              = float(row['f0']),
         ))
     return bearings
