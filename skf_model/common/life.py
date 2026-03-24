@@ -480,37 +480,37 @@ class BearingLife:
 
         return {
             # bearing
-            "type":        self.bearing["type"],
-            "arrangement": self.arrangement,
+            "type":         self.bearing["type"],
+            "arrangement":  self.arrangement,
             # loads
-            "Fr":          self.Fr,
-            "Fa":          self.Fa,
-            "f0FaC0":      self._cache.get("f0FaC0"),
-            "P":           self._equivalent_load(),
-            "P0":          static["P0"],
+            "Fr":           self.Fr,
+            "Fa":           self.Fa,
+            "f0*Fa/C0":     self._cache.get("f0FaC0"),
+            "P":            self._equivalent_load(),
+            "P0":           static["P0"],
             # table 9 / 10
-            "e":           eXY["e"],
-            "X":           eXY.get("X"),
-            "Y":           eXY.get("Y"),
-            "Y1":          eXY.get("Y1"),
-            "Y2":          eXY.get("Y2"),
+            "e":            eXY["e"],
+            "X":            eXY.get("X"),
+            "Y":            eXY.get("Y"),
+            "Y1":           eXY.get("Y1"),
+            "Y2":           eXY.get("Y2"),
             # lubrication
-            "v":           self._cache.get("v"),
-            "v1":          self._cache.get("v1"),
-            "kappa":       kappa,
+            "v":            self._cache.get("v"),
+            "v1":           self._cache.get("v1"),
+            "kappa":        kappa,
             # contamination
-            "eta_c":       self._eta_c(),
-            "x":           self._x_factor(),
+            "eta_c":        self._eta_c(),
+            "eta_c*Pu/P":   self._x_factor(),
             # life
-            "L10":         self.L10(),
-            "L10h":        self.L10h(),
-            "a_skf":       self.a_skf(),
-            "L_skf":       self.L_skf(),
-            "a1":     self._a1(),
-            "L_skfn": self.L_skfn(),
+            "L10":          self.L10(),
+            "L10h":         self.L10h(),
+            "a_skf":        self.a_skf(),
+            "L_skf":        self.L_skf(),
+            "a1":           self._a1(),
+            "L_skfn":       self.L_skfn(),
             # static
-            "C0":          static["C0"],
-            "s0":          static["s0"],
+            "C0":           static["C0"],
+            "s0":           static["s0"],
         }
 
 
@@ -526,7 +526,7 @@ if __name__ == "__main__":
         skipinitialspace=True,
     )
 
-    row = db[db["designation"] == "609"].iloc[0]
+    row = db[db["designation"] == "61906"].iloc[0]
 
     bearing = {
         "type":      "deep_groove_ball",
@@ -551,7 +551,7 @@ if __name__ == "__main__":
             Fr              = 2000,
             Fa              = 1000,
             n               = 1500,
-            viscosity_grade = "100",
+            viscosity_grade = "150",
             temperature     = 70,
             contamination   = "normal_cleanliness",
             **kwargs,
