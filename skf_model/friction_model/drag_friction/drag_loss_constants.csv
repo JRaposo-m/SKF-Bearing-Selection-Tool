@@ -1,0 +1,15 @@
+bearing_type,              subtype,           KZ,  KL
+deep_groove_ball,          single_double_row, 3.1,
+angular_contact_ball,      single_row,        4.4,
+angular_contact_ball,      double_row,        3.1,
+angular_contact_ball,      four_point,        3.1,
+self_aligning_ball,        ,                  4.8,
+cylindrical_roller,        with_cage,         5.1, 0.65
+cylindrical_roller,        full_complement,   6.2, 0.7
+tapered_roller,            ,                  6,   0.7
+spherical_roller,          ,                  5.5, 0.8
+carb_toroidal_roller,      with_cage,         5.3, 0.8
+carb_toroidal_roller,      full_complement,   6,   0.75
+thrust_ball,               ,                  3.8,
+cylindrical_roller_thrust, ,                  4.4, 0.43
+spherical_roller_thrust,   ,                  5.6, 0.58

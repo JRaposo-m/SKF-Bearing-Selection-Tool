@@ -34,10 +34,19 @@ _BEARING_CONFIGS = {
     # },
 }
 
+# _DATA_DIR mantém-se a apontar para data/ — continua correcto para a1_reliability.csv
 _DATA_DIR = os.path.abspath(
     os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "bearings", "data")
 )
 
+# _BEARING_CONFIGS — paths agora incluem subpasta
+_BEARING_CONFIGS = {
+    "deep_groove_ball": {
+        "eXY_file":   "deep_groove_ball/deep_groove_ball_eXY.csv",
+        "eY1Y2_file": "deep_groove_ball/deep_groove_ball_eY1Y2.csv",
+        "p":          3,
+    },
+}
 # ---------------------------------------------------------------------------
 # Lazy CSV loaders — only load when first requested
 # ---------------------------------------------------------------------------
@@ -549,7 +558,7 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
     db = pd.read_csv(
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "bearings", "data", "deep_groove_ball.csv")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "bearings", "data", "deep_groove_ball", "deep_groove_ball.csv")),
         skipinitialspace=True,
     )
 

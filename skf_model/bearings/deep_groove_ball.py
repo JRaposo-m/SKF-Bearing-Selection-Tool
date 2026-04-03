@@ -23,7 +23,7 @@ class DeepGrooveBallBearing:
     n_ref           : Optional[float]  # Reference speed (rpm) — None se não aplicável
     n_limit         : float          # Limiting speed (rpm)
     mass            : float          # Mass (kg)
-    kt              : float          # Rigidity factor — used for misalignment (Semester)
+    kr              : float          # Rigidity factor — used for misalignment (Semester)
     f0              : float          # Geometry factor — used for axial load calculation
 
 
@@ -34,7 +34,7 @@ def load_bearings(csv_path: str = None) -> list[DeepGrooveBallBearing]:
     """
     if csv_path is None:
         base_dir = os.path.dirname(__file__)
-        csv_path = os.path.join(base_dir, "data", "deep_groove_ball.csv")
+        csv_path = os.path.join(base_dir, "data", "deep_groove_ball", "deep_groove_ball.csv")
 
     df = pd.read_csv(
         csv_path,

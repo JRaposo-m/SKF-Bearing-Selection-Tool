@@ -1,0 +1,18 @@
+seal_type,  bearing_type,          D_over, D_incl, beta, KS1,    KS2, ds
+# RSL seals
+RSL,        deep_groove_ball,      ,       25,     0,    0,      0,   d2
+RSL,        deep_groove_ball,      25,     52,     2.25, 0.0018, 0,   d2
+# RSH seals
+RSH,        deep_groove_ball,      ,       52,     2.25, 0.028,  2,   d2
+# RS1 seals
+RS1,        deep_groove_ball,      ,       62,     2.25, 0.023,  2,   d1 d2
+RS1,        deep_groove_ball,      62,     80,     2.25, 0.018,  20,  d1 d2
+RS1,        deep_groove_ball,      80,     100,    2.25, 0.018,  15,  d1 d2
+RS1,        deep_groove_ball,      100,    ,       2.25, 0.018,  0,   d1 d2
+RS1,        angular_contact_ball,  30,     120,    2,    0.014,  10,  d1
+RS1,        self_aligning_ball,    30,     125,    2,    0.014,  10,  d2
+# LS seals
+LS,         cylindrical_roller,    42,     360,    2,    0.032,  50,  E
+# CS/CS2/CS5 seals
+CS_CS2_CS5, spherical_roller,      62,     300,    2,    0.057,  50,  d2
+CS_CS2_CS5, carb_toroidal_roller,  42,     340,    2,    0.057,  50,  d2
