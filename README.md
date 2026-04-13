@@ -23,6 +23,10 @@ The project is in active development. The current focus is deep groove ball bear
 - Equivalent dynamic load P with axial load factors e and Y from the catalogue tables
 - `selector.py`: given (Fr, Fa, n, L10h), returns a ranked list of bearings with estimated life and safety margin
 - Validation against the SKF Bearing Calculator on a set of reference cases
+- Friction model: M_rr, M_sl, M_drag, M_seal and M_total for all bearing types (Table 1a / 1b)
+  - `geometry_variables.py`: G_rr and G_sl per bearing type, exact catalogue formulas
+  - `frictional_moment.py`: φ_ish, φ_rs, φ_bl, μ_sl, drag loss, seal moment
+  - Drag loss factor V_M digitised for ball and roller bearings, combined interpolation from zoomed and full-range curves
 
 **Phase 2 — planned**
 
@@ -54,6 +58,14 @@ SKF-Bearing-Selection-Tool/
 |   |           +-- ...
 |   |           +-- k_4.csv
 |   |           +-- a_skf_radial_ball_bearing.py
+|   +-- Friction Moments/
+|   |   +-- Drag Moment/
+|   |       +-- Drag Loss Factor Vm/
+|   |           +-- ball_bearing_ampliado.csv      # digitised V_M curve, ball, H/dm 0–0.2
+|   |           +-- ball_bearing.csv               # digitised V_M curve, ball, full range
+|   |           +-- roller_bearing_ampliado.csv    # digitised V_M curve, roller, H/dm 0–0.2
+|   |           +-- roller_bearing.csv             # digitised V_M curve, roller, full range
+|   |           +-- drag_loss_factor_Vm.py         # interpolator + get_Vm() + plot
 |   +-- Viscosity/
 |       +-- Rated Viscosity/
 |       |   +-- n_rpm_2.csv                # digitised rated viscosity curve, n = 2 rpm
@@ -79,7 +91,8 @@ SKF-Bearing-Selection-Tool/
     +-- common/
     |   +-- __pycache__/
     |   +-- constants/
-    |   +-- frictional_moment.py           # total frictional moment calculation
+    |   +-- frictional_moment.py           # total frictional moment (M_rr, M_sl, M_drag, M_seal)
+    |   +-- geometry_variables.py          # G_rr and G_sl per bearing type (Table 1a / 1b)
     |   +-- life.py                        # L10 and a_SKF rating life
     |   +-- load.py                        # equivalent dynamic and static load
     |   +-- lubrication.py                 # v1, kappa (Phase 2)
@@ -132,6 +145,38 @@ from Graficos.Bearing_life.a_SKF.Ball_Bearing.a_skf_radial_ball_bearing import g
 a = get_a_skf(x=0.5, k=0.25)   # a_SKF for given contamination factor x and viscosity ratio k
 ```
 
+### Frictional moment
+
+```python
+from skf_model.common.frictional_moment import frictional_moment
+
+r = frictional_moment(
+    bearing_type = "deep_groove_ball",
+    designation  = "6206-2RS1",
+    d   = 30,        # bore diameter [mm]
+    D   = 62,        # outside diameter [mm]
+    B   = 16,        # width [mm]
+    Fr  = 3000,      # radial load [N]
+    Fa  = 500,       # axial load [N]
+    n   = 1500,      # rotational speed [r/min]
+    v   = 32,        # actual viscosity [mm²/s]
+    H   = 0,         # oil level [mm] — 0 for grease / oil-air
+    lubrication = "oil_air",
+    lubricant   = "mineral",
+    seal_type   = "RS1",
+    C0          = 11200,   # static load rating [N], required when Fa > 0
+)
+print(r)           # M_rr, M_sl, M_drag, M_seal, M_tot  [N·mm]
+```
+
+### Drag loss factor V_M
+
+```python
+from drag_loss_factor_Vm import get_Vm
+
+Vm = get_Vm(H_over_dm=0.5, bearing_family="ball")   # V_M at H/dm = 0.5
+```
+
 ### Bearing selection (in progress)
 
 ```python
@@ -157,6 +202,7 @@ Current coverage:
 - Rated viscosity v1 — n = 2 to 100 000 rpm (17 curves), with operating zone boundaries
 - Viscosity-temperature — ISO VG grades 10 to 1000
 - Drag constants Kz and KL — all bearing types per SKF General Catalogue Table 4, stored in `drag_friction/drag_loss_constants.csv`
+- Drag loss factor V_M — ball and roller bearings, H/dm = 0 to 1.4 (4 curves, zoomed + full range combined)
 
 ---
 
