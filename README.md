@@ -77,10 +77,25 @@ SKF-Bearing-Selection-Tool/
     |   +-- angular_contact_ball.py        # Phase 2
     |   +-- cylindrical_roller.py          # Phase 2
     +-- common/
-        +-- life.py                        # L10 and a_SKF rating life
-        +-- load.py                        # equivalent dynamic and static load
-        +-- lubrication.py                 # v1, kappa (Phase 2)
-        +-- misalignment.py                # load correction factor (Phase 3)
+    |   +-- __pycache__/
+    |   +-- constants/
+    |   +-- frictional_moment.py           # total frictional moment calculation
+    |   +-- life.py                        # L10 and a_SKF rating life
+    |   +-- load.py                        # equivalent dynamic and static load
+    |   +-- lubrication.py                 # v1, kappa (Phase 2)
+    |   +-- misalignment.py                # load correction factor (Phase 3)
+    +-- diagnostics/
+    +-- friction_model/
+        +-- drag_friction/
+        |   +-- drag_loss_constants.csv    # geometric constants Kz and KL per bearing type (Table 4)
+        |   +-- drag_loss_constants.py
+        +-- friction_constants/
+        |   +-- friction_RS_constants.csv  # friction constants for RS-sealed bearings
+        |   +-- rs_constants.py
+        +-- seal_friction/
+        |   +-- friction_seal_constants.py
+        |   +-- seal_frictional_moment.csv # seal frictional moment data
+
 ```
 
 ---
@@ -141,6 +156,7 @@ Current coverage:
 - a_SKF factor — ball bearings, kappa = 0.15 to 4.0 (13 curves)
 - Rated viscosity v1 — n = 2 to 100 000 rpm (17 curves), with operating zone boundaries
 - Viscosity-temperature — ISO VG grades 10 to 1000
+- Drag constants Kz and KL — all bearing types per SKF General Catalogue Table 4, stored in `drag_friction/drag_loss_constants.csv`
 
 ---
 
@@ -155,7 +171,8 @@ Operating conditions: Fr, Fa, n, lubricant viscosity, required L10h
     +-- 2. Bearing size      required C from L10 equation, selection from database
     +-- 3. a_SKF factor      kappa from viscosity, a_SKF from digitised catalogue curve
     +-- 4. Lubrication       v1, kappa, relubrication interval
-    +-- 5. Diagnostics       fault frequencies, misalignment correction
+    +-- 5. Friction          drag loss, seal friction, frictional moment
+    +-- 6. Diagnostics       fault frequencies, misalignment correction
     |
     v
 Bearing designation + operating recommendations
