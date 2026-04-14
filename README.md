@@ -21,12 +21,14 @@ The project is in active development. The current focus is deep groove ball bear
 - L10 basic rating life per ISO 281
 - a_SKF correction factor: catalogue curves digitised with WebPlotDigitizer, stored as CSV per kappa value, interpolated in Python
 - Equivalent dynamic load P with axial load factors e and Y from the catalogue tables
-- `selector.py`: given (Fr, Fa, n, L10h), returns a ranked list of bearings with estimated life and safety margin
-- Validation against the SKF Bearing Calculator on a set of reference cases
+- `selector.py`: given (Fr, Fa, n, L10h), returns a ranked list of bearings with estimated life, safety margin, and total frictional moment
 - Friction model: M_rr, M_sl, M_drag, M_seal and M_total for all bearing types (Table 1a / 1b)
   - `geometry_variables.py`: G_rr and G_sl per bearing type, exact catalogue formulas
   - `frictional_moment.py`: φ_ish, φ_rs, φ_bl, μ_sl, drag loss, seal moment
   - Drag loss factor V_M digitised for ball and roller bearings, combined interpolation from zoomed and full-range curves
+  - Seal moment using real catalogue dimensions d1 and d2 where available; automatic seal type detection from bearing designation
+- Bearing database extended with abutment dimensions d1, d2, D1, D2 and fillet radius r1,2 for all DGBB entries (SKF General Catalogue, sourced per bearing)
+- Validation against the SKF Bearing Calculator on a set of reference cases
 
 **Phase 2 — planned**
 
@@ -84,8 +86,8 @@ SKF-Bearing-Selection-Tool/
 +-- skf_model/
     +-- bearings/
     |   +-- data/
-    |   |   +-- deep_groove_ball.csv       # C, C0, dimensions, speed limits
-    |   |   +-- deep_groove_ball.py
+    |   |   +-- deep_groove_ball.csv       # C, C0, dimensions, abutment dims, speed limits
+    |   |   +-- deep_groove_ball.py        # dataclass + loader
     |   +-- angular_contact_ball.py        # Phase 2
     |   +-- cylindrical_roller.py          # Phase 2
     +-- common/
@@ -94,7 +96,6 @@ SKF-Bearing-Selection-Tool/
     |   +-- frictional_moment.py           # total frictional moment (M_rr, M_sl, M_drag, M_seal)
     |   +-- geometry_variables.py          # G_rr and G_sl per bearing type (Table 1a / 1b)
     |   +-- life.py                        # L10 and a_SKF rating life
-    |   +-- load.py                        # equivalent dynamic and static load
     |   +-- lubrication.py                 # v1, kappa (Phase 2)
     |   +-- misalignment.py                # load correction factor (Phase 3)
     +-- diagnostics/
@@ -107,8 +108,7 @@ SKF-Bearing-Selection-Tool/
         |   +-- rs_constants.py
         +-- seal_friction/
         |   +-- friction_seal_constants.py
-        |   +-- seal_frictional_moment.csv # seal frictional moment data
-
+        |   +-- seal_frictional_moment.csv # seal frictional moment constants (KS1, KS2, beta, ds)
 ```
 
 ---
@@ -149,22 +149,28 @@ a = get_a_skf(x=0.5, k=0.25)   # a_SKF for given contamination factor x and visc
 
 ```python
 from skf_model.common.frictional_moment import frictional_moment
+from skf_model.bearings.deep_groove_ball import load_bearings
+
+bearings = {b.designation: b for b in load_bearings()}
+b = bearings["6208-2RSH"]
 
 r = frictional_moment(
     bearing_type = "deep_groove_ball",
-    designation  = "6206-2RS1",
-    d   = 30,        # bore diameter [mm]
-    D   = 62,        # outside diameter [mm]
-    B   = 16,        # width [mm]
-    Fr  = 3000,      # radial load [N]
-    Fa  = 500,       # axial load [N]
-    n   = 1500,      # rotational speed [r/min]
-    v   = 32,        # actual viscosity [mm²/s]
-    H   = 0,         # oil level [mm] — 0 for grease / oil-air
+    designation  = b.designation,
+    d   = b.d,        # bore diameter [mm]
+    D   = b.D,        # outside diameter [mm]
+    B   = b.B,        # width [mm]
+    Fr  = 3000,       # radial load [N]
+    Fa  = 500,        # axial load [N]
+    n   = 1500,       # rotational speed [r/min]
+    v   = 32,         # actual viscosity [mm²/s]
+    H   = 0,          # oil level [mm] — 0 for grease / oil-air
     lubrication = "oil_air",
     lubricant   = "mineral",
-    seal_type   = "RS1",
-    C0          = 11200,   # static load rating [N], required when Fa > 0
+    seal_type   = "RSH",   # None for open/shielded, auto-detected in selector
+    C0          = b.C0 * 1000,   # static load rating [N]
+    d1          = b.d1,   # inner seal diameter from catalogue [mm]
+    d2          = b.d2,   # outer seal diameter from catalogue [mm]
 )
 print(r)           # M_rr, M_sl, M_drag, M_seal, M_tot  [N·mm]
 ```
@@ -177,16 +183,24 @@ from drag_loss_factor_Vm import get_Vm
 Vm = get_Vm(H_over_dm=0.5, bearing_family="ball")   # V_M at H/dm = 0.5
 ```
 
-### Bearing selection (in progress)
+### Bearing selection
 
 ```python
-from skf_model.selector import select_bearing
+from skf_model.selector import select_bearings
 
-results = select_bearing(
-    Fr   = 5000,    # radial load, N
-    Fa   = 1000,    # axial load, N
-    n    = 1500,    # rotational speed, rpm
-    L10h = 20000,   # required service life, hours
+df = select_bearings(
+    Fr              = 5000,     # radial load [N]
+    Fa              = 1000,     # axial load [N]
+    n               = 1500,     # rotational speed [rpm]
+    L10h_required   = 20000,    # required service life [h]
+    viscosity_grade = "100",    # ISO VG grade
+    temperature     = 70,       # operating temperature [°C]
+    contamination   = "normal_cleanliness",
+    d               = None,     # fix bore diameter [mm] — None for all
+    compute_friction = True,
+    H               = 0,        # oil level [mm]
+    lubrication     = "oil_air",
+    sort_by         = "L_skf",
 )
 ```
 
@@ -203,6 +217,20 @@ Current coverage:
 - Viscosity-temperature — ISO VG grades 10 to 1000
 - Drag constants Kz and KL — all bearing types per SKF General Catalogue Table 4, stored in `drag_friction/drag_loss_constants.csv`
 - Drag loss factor V_M — ball and roller bearings, H/dm = 0 to 1.4 (4 curves, zoomed + full range combined)
+
+---
+
+## Bearing database
+
+The DGBB database (`deep_groove_ball.csv`) covers all single-row deep groove ball bearings from the SKF General Catalogue, including:
+
+- Dynamic load rating C, static load rating C0, fatigue load limit Pu
+- Bore d, outside diameter D, width B
+- Abutment and fillet dimensions: d1, d2, D1, D2, r1,2_min
+- Reference speed n_ref and limiting speed n_limit
+- Calculation factors kr and f0
+
+Seal dimensions d1 and d2 are used directly in the seal frictional moment calculation where available. When a dimension is not listed in the catalogue for a given variant, it is not used — no estimates are substituted.
 
 ---
 
