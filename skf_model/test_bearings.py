@@ -176,7 +176,6 @@ def _run_friction(row: pd.Series, Fr: float, Fa: float, n: float,
                   v: float, H: float, lubrication: str,
                   lubricant: str, seal_type) -> dict:
     
-    # Detetar vedante automaticamente pela designação se seal_type não for fornecido
     if seal_type is None:
         desig = str(row["designation"]).upper()
         if "2RSL" in desig or "RSL" in desig:
@@ -186,13 +185,17 @@ def _run_friction(row: pd.Series, Fr: float, Fa: float, n: float,
         elif "2RS" in desig or "-RS" in desig:
             detected_seal = "RS1"
         elif "2RZ" in desig or "-RZ" in desig:
-            detected_seal = None   # vedante sem contacto → sem atrito de vedante
+            detected_seal = None
         elif "2Z" in desig or "-Z" in desig:
-            detected_seal = None   # escudo metálico → sem atrito de vedante
+            detected_seal = None
         else:
             detected_seal = None
     else:
         detected_seal = seal_type
+
+    # d1/d2 — reais do CSV se disponíveis, senão None (fallback em _seal_moment)
+    d1 = float(row["d1"]) if pd.notna(row.get("d1")) else None
+    d2 = float(row["d2"]) if pd.notna(row.get("d2")) else None
 
     try:
         r = frictional_moment(
@@ -208,8 +211,10 @@ def _run_friction(row: pd.Series, Fr: float, Fa: float, n: float,
             H            = H,
             lubrication  = lubrication,
             lubricant    = lubricant,
-            seal_type    = detected_seal,  # ← usa o detetado
+            seal_type    = detected_seal,
             C0           = float(row["C0"]),
+            d1           = d1,
+            d2           = d2,
         )
         return {
             "M_rr":   r.M_rr,
@@ -222,7 +227,7 @@ def _run_friction(row: pd.Series, Fr: float, Fa: float, n: float,
         warnings.warn(f"Friction calc failed for {row['designation']}: {e}")
         return {"M_rr": None, "M_sl": None,
                 "M_drag": None, "M_seal": None, "M_tot": None}
-
+    
 
 # ---------------------------------------------------------------------------
 # Step 5 — Print table
@@ -416,7 +421,7 @@ def select_bearings(
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     df = select_bearings(
-        Fr                   = 2500,        # carga radial reduzida [N]
+        Fr                   = 1500,        # carga radial reduzida [N]
         Fa                   = 500,
         n                    = 1500,
         L10h_required        = 10_000,      # vida reduzida [h]
@@ -432,3 +437,4 @@ if __name__ == "__main__":
         seal_type            = None,
         sort_by              = "L_skf",
     )
+    

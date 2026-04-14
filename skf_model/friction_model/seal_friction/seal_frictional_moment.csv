@@ -4,6 +4,9 @@ RSL,        deep_groove_ball,      ,       25,     0,    0,      0,   d2
 RSL,        deep_groove_ball,      25,     52,     2.25, 0.0018, 0,   d2
 # RSH seals
 RSH,        deep_groove_ball,      ,       52,     2.25, 0.028,  2,   d2
+RSH,        deep_groove_ball,      52,     80,     2.25, 0.018,  20,  d2
+RSH,        deep_groove_ball,      80,     100,    2.25, 0.018,  15,  d2
+RSH,        deep_groove_ball,      100,    ,       2.25, 0.018,  0,   d2
 # RS1 seals
 RS1,        deep_groove_ball,      ,       62,     2.25, 0.023,  2,   d1 d2
 RS1,        deep_groove_ball,      62,     80,     2.25, 0.018,  20,  d1 d2

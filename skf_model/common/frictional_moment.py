@@ -300,32 +300,34 @@ def _drag_moment(bearing_family: BearingFamily,
 # ---------------------------------------------------------------------------
 
 def _seal_moment(seal_type: SealType, bearing_type: str,
-                 D: float, d: float) -> float:
-    """
-    Frictional moment of seals [N·mm].
-
-    Uses the *sum* of all ds contributions as specified in the CSV
-    (ds column lists which diameters to use).  For this implementation
-    both d1 and d2 are approximated from the bearing dimensions:
-        d1 ≈ d  (bore / inner seal diameter)
-        d2 ≈ D  (outer seal / shield diameter)
-        E  ≈ D  (effective seal diameter for LS seals)
-    """
+                 D: float, d: float,
+                 d1: float | None = None,
+                 d2: float | None = None) -> float:
     if seal_type is None:
         return 0.0
 
     sc = get_seal_constants(seal_type, bearing_type, D)
-    beta = sc["beta"]
-    KS1  = sc["KS1"]
-    KS2  = sc["KS2"]
+    beta      = sc["beta"]
+    KS1       = sc["KS1"]
+    KS2       = sc["KS2"]
     ds_labels = sc["ds"]
 
-    _dia = {"d1": d, "d2": D, "E": D}
+    _dia = {
+        "d1": d1,
+        "d2": d2,
+        "E" : D,
+    }
 
-    M = 0.0
-    for label in ds_labels:
-        ds = _dia.get(label, D)
-        M += KS1 * _pow(ds, beta) + KS2
+    # Só usa labels com valor real no catálogo
+    ds_values = [_dia[label] for label in ds_labels
+                 if _dia.get(label) is not None]
+
+    if not ds_values:
+        return 0.0
+
+    M = KS2
+    for ds in ds_values:
+        M += KS1 * _pow(ds, beta)
 
     return M
 
@@ -361,6 +363,8 @@ def frictional_moment(
     subtype:        str = "",
     C0:             float = None,
     irw:            int = 1,
+    d1:             float | None = None,   # ← novo
+    d2:             float | None = None,   # ← novo    
 ) -> FrictionResult:
     """
     Calculate the total frictional moment for a rolling bearing.
@@ -432,8 +436,7 @@ def frictional_moment(
     _G   = get_G(bearing_type, rs, dm, Fr, Fa, n=n, v=v, C0=C0)
     G_rr = _G["G_rr"]
     G_sl = _G["G_sl"]
-    # debug — remove after validation:
-    print(f"  [debug] G_rr={G_rr:.6f}  G_sl={G_sl:.6f}  extras={_G['extras']}")
+
 
     # --- Rolling moment  (SKF catalogue, eq. rolling)
     #   M_rr = phi_ish * phi_rs * G_rr * (v*n)^0.6
@@ -448,7 +451,7 @@ def frictional_moment(
     M_drag = _drag_moment(fam, bearing_type, d, D, B, dm, n, v, H, Kz, KL, irw)
 
     # --- Seal moment -------------------------------------------------------
-    M_seal = _seal_moment(seal_type, bearing_type, D, d)
+    M_seal = _seal_moment(seal_type, bearing_type, D, d, d1=d1, d2=d2)
 
     # --- Assemble result ---------------------------------------------------
     result             = FrictionResult(
@@ -476,20 +479,27 @@ def frictional_moment(
 # Quick test
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    # Example: 6206-2RS1  deep groove ball bearing
-    #   d=30, D=62, B=16, Fr=3000 N, Fa=500 N
-    #   n=1500 r/min, v=32 mm²/s, H=0 mm (grease), RS1 seal
+    import sys
+    sys.path.insert(0, str(_ROOT))
+
+    from skf_model.bearings.deep_groove_ball import load_bearings
+
+    bearings = {b.designation: b for b in load_bearings()}
+    b = bearings["6208-2RSH"]
+
     r = frictional_moment(
             bearing_type = "deep_groove_ball",
-            designation  = "6206-2RS1",
-            d   = 30,   D   = 62,   B  = 16,
-            Fr  = 3000, Fa  = 500,  n  = 1500,
+            designation  = b.designation,
+            d   = b.d,   D   = b.D,   B  = b.B,
+            Fr  = 1500,  Fa  = 500,   n  = 1500,
             v   = 32,
-            H   = 23,          # ← meio submerso em óleo
-            lubrication  = "oil_bath",   # ← importante
+            H   = 20,
+            lubrication  = "oil_air",
             lubricant    = "mineral",
-            seal_type    = None,         # ← sem vedante para isolar o drag
-            C0           = 11200,
+            seal_type    = "RSH",
+            C0           = b.C0 * 1000,
+            d1           = b.d1,
+            d2           = b.d2,
         )
     print(r)
     print(f"  G_rr = {r.G_rr:.6f}")
