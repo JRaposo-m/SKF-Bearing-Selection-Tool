@@ -318,9 +318,18 @@ def _seal_moment(seal_type: SealType, bearing_type: str,
         "E" : D,
     }
 
-    # Só usa labels com valor real no catálogo
-    ds_values = [_dia[label] for label in ds_labels
-                 if _dia.get(label) is not None]
+    # Use catalogue-preferred label; fall back to sibling seal diameter
+    # if the preferred one is absent from the database entry (d1 ↔ d2).
+    _fallback = {"d1": "d2", "d2": "d1"}
+    ds_values = []
+    for label in ds_labels:
+        val = _dia.get(label)
+        if val is not None:
+            ds_values.append(val)
+        else:
+            fb = _fallback.get(label)
+            if fb and _dia.get(fb) is not None:
+                ds_values.append(_dia[fb])
 
     if not ds_values:
         return 0.0
