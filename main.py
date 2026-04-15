@@ -416,31 +416,22 @@ def step_genetic_optimisation(
 ) -> tuple:
     _header("Step 8 — Genetic algorithm optimisation")
 
-    print("  The GA will optimise: ISO VG grade and rotational speed.")
-    print(f"  Operating temperature fixed at T_op = {T_op:.1f} °C (your input).")
+    print("  The GA will optimise: ISO VG grade only.")
+    print(f"  Speed fixed at n = {n:.0f} rpm  |  T_op = {T_op:.1f} °C  (your inputs).")
     print("  Objective: minimise friction (70%) + maximise life margin (30%).\n")
 
     best_result   = None
     best_bearing  = None
     best_fitness  = float("inf")
 
-    n_min = max(100.0, n * 0.5)   # allow speed down to 50 % of input
-    n_max = n                     # do not exceed user-specified speed
-
     for bearing in candidates:
-        n_max_b = min(n_max, bearing.n_limit)
-        if n_max_b < n_min:
-            continue  # bearing cannot run in the allowed speed range
-
-        vg_lo = 0
-        vg_hi = len(VG_GRADES) - 1
-
         opt = GeneticOptimiser(
             fitness_fn     = evaluate,
             fitness_kwargs = dict(
                 bearing       = bearing,
                 Fr            = Fr,
                 Fa            = Fa,
+                n             = n,
                 T_op          = T_op,
                 L10h_req      = L10h_req,
                 contamination = contamination,
@@ -449,8 +440,7 @@ def step_genetic_optimisation(
                 H             = lube["H"],
             ),
             bounds = {
-                "vg_idx": (0,     len(VG_GRADES) - 1),
-                "n"     : (n_min, n_max_b),
+                "vg_idx": (0, len(VG_GRADES) - 1),
             },
             pop_size     = 30,
             elite_frac   = 0.30,
@@ -487,6 +477,7 @@ def step_summary(
     best_result: dict,
     Fr: float,
     Fa: float,
+    n: float,
     T_op: float,
     L10h_req: float,
     lube: dict,
@@ -504,8 +495,7 @@ def step_summary(
 
     genes  = best_result["best_genes"]
     vg_val = VG_GRADES[int(genes["vg_idx"])]
-    n_opt  = genes["n"]
-    T_opt  = lube.get("T_op", 70.0)   # T_op was fixed by user, not a gene
+    T_opt  = lube.get("T_op", 70.0)
 
     print(f"\n  Bearing selected   : {best_bearing.designation}")
     print(f"  Bore d             : {best_bearing.d:.0f} mm")
@@ -517,7 +507,7 @@ def step_summary(
     print(f"\n  ── Optimised operating conditions ──")
     print(f"  ISO VG grade       : VG {vg_val}")
     print(f"  Operating temp.    : {T_opt:.1f} °C")
-    print(f"  Operating speed    : {n_opt:.0f} rpm")
+    print(f"  Operating speed    : {n:.0f} rpm  (user input)")
     print(f"  Lubrication mode   : {lube['lubrication']}")
     print(f"  Lubricant base     : {lube['lubricant']}")
     print(f"  Contamination      : {contamination}")
@@ -530,10 +520,11 @@ def step_summary(
     try:
         from genetic_algorithm.fitness import get_intermediate_values
         iv = get_intermediate_values(
-            genes         = {"vg_idx": genes["vg_idx"], "n": n_opt},
+            genes         = {"vg_idx": genes["vg_idx"]},
             bearing       = best_bearing,
             Fr            = Fr,
             Fa            = Fa,
+            n             = n,
             T_op          = T_opt,
             L10h_req      = L10h_req,
             contamination = contamination,
@@ -642,6 +633,7 @@ def main() -> None:
         best_bearing=best_bearing,
         best_result=best_result,
         Fr=Fr, Fa=Fa,
+        n=n,
         T_op=T_op,
         L10h_req=L10h,
         lube=lube,
@@ -658,6 +650,7 @@ def main() -> None:
             bearing       = best_bearing,
             Fr            = Fr,
             Fa            = Fa,
+            n             = n,
             T_op          = T_op,
             L10h_req      = L10h,
             contamination = contamination,
@@ -681,7 +674,7 @@ def main() -> None:
             "lubricant"     : lube["lubricant"],
             "H"             : lube["H"],
             "vg"            : iv["vg"],
-            "n_opt"         : iv["n"],
+            "n_opt"         : n,
             # GA histories
             "ga_history"        : best_result["history"],
             "ga_pen_history"    : best_result["pen_history"],

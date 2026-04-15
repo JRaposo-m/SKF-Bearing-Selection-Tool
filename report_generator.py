@@ -222,11 +222,11 @@ def _fig_viscosity_temperature(vg: int, T_op: float, v_act: float) -> Image:
     ax.axvline(T_op, color="#E8540A", linestyle="--", linewidth=1.5,
                label=f"T_op = {T_op:.0f} °C")
     ax.axhline(v_act, color="#888888", linestyle=":", linewidth=1.2,
-               label=f"v = {v_act:.1f} mm²/s")
+               label=f"v = {v_act:.1f} mm2/s")
     ax.plot(T_op, v_act, "o", color="#E8540A", markersize=7, zorder=5)
 
     ax.set_xlabel("Temperature [°C]", fontsize=9)
-    ax.set_ylabel("Kinematic viscosity [mm²/s]", fontsize=9)
+    ax.set_ylabel("Kinematic viscosity [mm2/s]", fontsize=9)
     ax.legend(fontsize=8)
     ax.grid(True, which="both", alpha=0.3, linewidth=0.5)
     ax.tick_params(labelsize=8)
@@ -245,15 +245,15 @@ def _fig_rated_viscosity(dm: float, n_opt: float, v1: float, n_user: float) -> I
 
     fig, ax = plt.subplots(figsize=(6.5, 3.2))
     ax.loglog(speeds, v1s, color="#003875", linewidth=2,
-              label=f"v₁  (dm = {dm:.1f} mm)")
+              label=f"v1  (dm = {dm:.1f} mm)")
     ax.axvline(n_opt, color="#E8540A", linestyle="--", linewidth=1.5,
-               label=f"n_opt = {n_opt:.0f} rpm")
+               label=f"n = {n_opt:.0f} rpm")
     ax.axhline(v1, color="#888888", linestyle=":", linewidth=1.2,
-               label=f"v₁ = {v1:.1f} mm²/s")
+               label=f"v1 = {v1:.1f} mm2/s")
     ax.plot(n_opt, v1, "o", color="#E8540A", markersize=7, zorder=5)
 
     ax.set_xlabel("Speed [rpm]", fontsize=9)
-    ax.set_ylabel("Rated viscosity v₁ [mm²/s]", fontsize=9)
+    ax.set_ylabel("Rated viscosity v1 [mm2/s]", fontsize=9)
     ax.legend(fontsize=8)
     ax.grid(True, which="both", alpha=0.3, linewidth=0.5)
     ax.tick_params(labelsize=8)
@@ -311,24 +311,24 @@ def _table_operating_inputs(d: dict, styles) -> Table:
          Paragraph("Parameter", TH), Paragraph("Value", TH)],
         [Paragraph("Radial load Fr", TCL),
          Paragraph(f"{d['Fr']:.0f} N", TC),
-         Paragraph("Speed n (input)", TCL),
-         Paragraph(f"{d['n']:.0f} rpm", TC)],
-        [Paragraph("Axial load Fa", TCL),
-         Paragraph(f"{d['Fa']:.0f} N", TC),
-         Paragraph("Speed n (optimised)", TCL),
-         Paragraph(f"{d['n_opt']:.0f} rpm", TC)],
-        [Paragraph("Temperature T_op", TCL),
-         Paragraph(f"{d['T_op']:.1f} °C", TC),
-         Paragraph("Required life L10h", TCL),
-         Paragraph(f"{d['L10h_req']:,.0f} h", TC)],
+         Paragraph("Axial load Fa", TCL),
+         Paragraph(f"{d['Fa']:.0f} N", TC)],
+        [Paragraph("Speed n", TCL),
+         Paragraph(f"{d['n']:.0f} rpm", TC),
+         Paragraph("Temperature T_op", TCL),
+         Paragraph(f"{d['T_op']:.1f} °C", TC)],
+        [Paragraph("Required life L10h", TCL),
+         Paragraph(f"{d['L10h_req']:,.0f} h", TC),
+         Paragraph("ISO VG grade (optimised)", TCL),
+         Paragraph(f"VG {d['vg']}", TC)],
         [Paragraph("Lubrication", TCL),
          Paragraph(d['lubrication'], TC),
          Paragraph("Lubricant", TCL),
          Paragraph(d['lubricant'], TC)],
-        [Paragraph("ISO VG grade", TCL),
-         Paragraph(f"VG {d['vg']}", TC),
-         Paragraph("Contamination", TCL),
-         Paragraph(d['contamination'].replace("_", " "), TC)],
+        [Paragraph("Contamination", TCL),
+         Paragraph(d['contamination'].replace("_", " "), TC),
+         Paragraph("Oil level H", TCL),
+         Paragraph(f"{d['H']:.0f} mm", TC)],
     ]
 
     col_w = [CONTENT_W * 0.28, CONTENT_W * 0.22,
@@ -702,9 +702,9 @@ def generate_report(data: dict) -> str:
     if fig_rv:
         story.append(fig_rv)
         story.append(Paragraph(
-            f"Figure 3 — Rated viscosity v₁ vs speed for d_m = {dm:.1f} mm. "
+            f"Figure 3 — Rated viscosity v1 vs speed for dm = {dm:.1f} mm. "
             f"Operating point: n = {data['n_opt']:.0f} rpm, "
-            f"v₁ = {data['v1']:.1f} mm²/s.",
+            f"v1 = {data['v1']:.1f} mm²/s.",
             styles["Caption"]))
     story.append(Spacer(1, 4*mm))
 

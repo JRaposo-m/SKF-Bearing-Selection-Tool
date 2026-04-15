@@ -3,8 +3,8 @@ ga_optimizer.py
 ---------------
 Binary-coded GA — mirrors MATLAB implementation.
 
-Genes: vg_idx (discrete) | n (continuous)
-T_op is fixed — NOT a gene.
+Gene: vg_idx (discrete) — only 1 gene
+n and T_op are fixed user inputs — NOT genes.
 
 Encoding    : binary, 2 decimal places
 Selection   : SUS
@@ -149,10 +149,8 @@ class GeneticOptimiser:
 
         self.bit_lengths = {}
         for gene, (lo, hi) in bounds.items():
-            if gene == "vg_idx":
-                self.bit_lengths[gene] = _n_bits(lo, hi, decimals=0)
-            else:
-                self.bit_lengths[gene] = _n_bits(lo, hi, decimals=2)
+            # vg_idx is the only gene — discrete index 0..9
+            self.bit_lengths[gene] = _n_bits(lo, hi, decimals=0)
 
         self.chrom_len  = sum(self.bit_lengths.values())
         self._gene_order = sorted(bounds.keys())
@@ -231,7 +229,7 @@ class GeneticOptimiser:
                 print(f"    Gen {k:3d}/{self.max_gen} | "
                       f"merit={merits[order[0]]:.4f} | "
                       f"λ={self.lam:.3f} | pen={pens[order[0]]:.5f} | "
-                      f"VG={VG_GRADES[g['vg_idx']]}  n={g['n']:.0f}rpm")
+                      f"VG={VG_GRADES[g['vg_idx']]}")
 
             # ---- elitism ----
             elite = [pop[order[i]][:] for i in range(self.N_elite)]
